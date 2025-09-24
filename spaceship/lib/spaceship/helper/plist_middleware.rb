@@ -1,14 +1,28 @@
-require 'faraday_middleware/response_middleware'
+require 'faraday'
 
 module FaradayMiddleware
-  class PlistMiddleware < ResponseMiddleware
-    dependency do
-      require 'plist' unless Object.const_defined?("Plist")
+  class PlistMiddleware < Faraday::Middleware
+    def initialize(app, options = {})
+      super(app)
+      require 'plist' unless Object.const_defined?(:Plist)
     end
 
-    define_parser do |body|
+    def call(environment)
+      @app.call(environment).on_complete do |env|
+        if env.response_headers['content-type']&.include?('plist')
+          env.body = parse_plist(env.body)
+        end
+      end
+    end
+
+    private
+
+    def parse_plist(body)
+      return body unless body
       body = body.force_encoding("UTF-8")
       Plist.parse_xml(body)
+    rescue
+      body
     end
   end
 end

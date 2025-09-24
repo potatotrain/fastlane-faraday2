@@ -1,7 +1,7 @@
 require 'babosa'
 require 'faraday' # HTTP Client
 require 'faraday-cookie_jar'
-require 'faraday_middleware'
+require 'faraday/follow_redirects'
 require 'logger'
 require 'tmpdir'
 require 'cgi'
@@ -20,7 +20,8 @@ require_relative 'provider'
 require_relative 'stats_middleware'
 require_relative 'hashcash'
 
-Faraday::Utils.default_params_encoder = Faraday::FlatParamsEncoder
+# Faraday v2 doesn't have a global default_params_encoder setter
+# This is now handled per-connection
 
 module Spaceship
   # rubocop:disable Metrics/ClassLength
@@ -212,6 +213,7 @@ module Spaceship
       @cookie = cookie || HTTP::CookieJar.new
 
       @client = Faraday.new(self.class.hostname, options) do |c|
+        c.request(:url_encoded, params_encoder: Faraday::FlatParamsEncoder)
         c.response(:json, content_type: /\bjson$/)
         c.response(:plist, content_type: /\bplist$/)
         c.use(:cookie_jar, jar: @cookie)
@@ -799,7 +801,7 @@ module Spaceship
         puts(msg) if Spaceship::Globals.verbose?
         logger.warn(msg)
 
-        sleep(3) unless Object.const_defined?("SpecHelper")
+        sleep(3) unless Object.const_defined?(:SpecHelper)
         retry
       end
       raise ex # re-raise the exception
@@ -810,7 +812,7 @@ module Spaceship
         puts(msg) if Spaceship::Globals.verbose?
         logger.warn(msg)
 
-        sleep(ex.retry_after) unless Object.const_defined?("SpecHelper")
+        sleep(ex.retry_after) unless Object.const_defined?(:SpecHelper)
         retry
       end
       raise ex # re-raise the exception
@@ -823,7 +825,7 @@ module Spaceship
         puts(msg) if Spaceship::Globals.verbose?
         logger.warn(msg)
 
-        sleep(3) unless Object.const_defined?("SpecHelper")
+        sleep(3) unless Object.const_defined?(:SpecHelper)
         retry
       end
       raise ex # re-raise the exception
@@ -838,7 +840,7 @@ module Spaceship
         end
 
         do_login(self.user, @password)
-        sleep(3) unless Object.const_defined?("SpecHelper")
+        sleep(3) unless Object.const_defined?(:SpecHelper)
         retry
       end
       raise ex # re-raise the exception
@@ -1019,7 +1021,7 @@ module Spaceship
         end
         obj.headers = {}
         yield(obj)
-        obj.instance_variable_get("@#{key}")
+        obj.instance_variable_get(:"@#{key}")
       end
     end
 

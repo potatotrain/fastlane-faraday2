@@ -9,7 +9,8 @@ module Fastlane
     class HockeyAction < Action
       def self.connection(options)
         require 'faraday'
-        require 'faraday_middleware'
+        require 'faraday/multipart'
+        require 'faraday/follow_redirects'
 
         base_url = options.delete(:bypass_cdn) ? "https://rink.hockeyapp.net" : "https://upload.hockeyapp.net"
         foptions = {
@@ -19,7 +20,7 @@ module Fastlane
           builder.request(:multipart)
           builder.request(:url_encoded)
           builder.response(:json, content_type: /\bjson$/)
-          builder.use(FaradayMiddleware::FollowRedirects)
+          builder.response(:follow_redirects)
           builder.adapter(:net_http)
         end
       end
@@ -39,11 +40,11 @@ module Fastlane
       def self.upload_build(api_token, ipa, options)
         connection = self.connection(options)
 
-        options[:ipa] = Faraday::UploadIO.new(ipa, 'application/octet-stream') if ipa && File.exist?(ipa)
+        options[:ipa] = Faraday::Multipart::FilePart.new(ipa, 'application/octet-stream') if ipa && File.exist?(ipa)
 
         dsym_filename = options.delete(:dsym_filename)
         if dsym_filename
-          options[:dsym] = Faraday::UploadIO.new(dsym_filename, 'application/octet-stream')
+          options[:dsym] = Faraday::Multipart::FilePart.new(dsym_filename, 'application/octet-stream')
         end
 
         connection.post do |req|
@@ -74,11 +75,11 @@ module Fastlane
         options.delete(:apk)
         app_id = options.delete(:public_identifier)
 
-        ipaio = Faraday::UploadIO.new(ipa, 'application/octet-stream') if ipa && File.exist?(ipa)
+        ipaio = Faraday::Multipart::FilePart.new(ipa, 'application/octet-stream') if ipa && File.exist?(ipa)
         dsym = options.delete(:dsym)
 
         if dsym
-          dsym_io = Faraday::UploadIO.new(dsym, 'application/octet-stream') if dsym && File.exist?(dsym)
+          dsym_io = Faraday::Multipart::FilePart.new(dsym, 'application/octet-stream') if dsym && File.exist?(dsym)
         end
 
         # https://support.hockeyapp.net/discussions/problems/83559

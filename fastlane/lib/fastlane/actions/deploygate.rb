@@ -15,19 +15,20 @@ module Fastlane
 
       def self.upload_build(api_token, user_name, binary, options)
         require 'faraday'
-        require 'faraday_middleware'
+        require 'faraday/multipart'
+        require 'faraday/follow_redirects'
 
         connection = Faraday.new(url: DEPLOYGATE_URL_BASE, request: { timeout: 120 }) do |builder|
           builder.request(:multipart)
           builder.request(:json)
           builder.response(:json, content_type: /\bjson$/)
-          builder.use(FaradayMiddleware::FollowRedirects)
+          builder.response(:follow_redirects)
           builder.adapter(:net_http)
         end
 
         options.update({
           token: api_token,
-          file: Faraday::UploadIO.new(binary, 'application/octet-stream'),
+          file: Faraday::Multipart::FilePart.new(binary, 'application/octet-stream'),
           message: options[:message] || ''
         })
         options[:disable_notify] = 'yes' if options[:disable_notify]

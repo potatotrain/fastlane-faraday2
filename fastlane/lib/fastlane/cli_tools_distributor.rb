@@ -1,3 +1,5 @@
+require 'fastlane_core'
+
 module Fastlane
   # This class is responsible for checking the ARGV
   # to see if the user wants to launch another fastlane

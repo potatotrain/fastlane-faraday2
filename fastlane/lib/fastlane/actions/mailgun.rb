@@ -11,6 +11,7 @@ module Fastlane
         Actions.verify_gem!('faraday')
         Actions.verify_gem!('mime-types')
         require 'faraday'
+        require 'faraday/multipart'
         begin
           # Use mime/types/columnar if available, for reduced memory usage
           require 'mime/types/columnar'
@@ -133,7 +134,7 @@ module Fastlane
 
         unless options[:attachment].nil?
           attachment_filenames = [*options[:attachment]]
-          attachments = attachment_filenames.map { |filename| Faraday::UploadIO.new(filename, mime_for(filename), filename) }
+          attachments = attachment_filenames.map { |filename| Faraday::Multipart::FilePart.new(filename, mime_for(filename), filename) }
           params.store(:attachment, attachments)
         end
 

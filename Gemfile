@@ -10,7 +10,7 @@ gem "climate_control", "~> 0.2.0"
 # A tool for integrating Coveralls.io with Ruby apps.
 gem "coveralls", "~> 0.8.13"
 # Automates code review chores.
-gem "danger", "~> 8.0"
+gem "danger", "~> 9.0"
 # Plugin for Danger that reports JUnit test results.
 gem "danger-junit", "~> 1.0"
 # A fake filesystem.
@@ -58,3 +58,10 @@ gemspec(path: ".")
 
 plugins_path = File.join(File.expand_path("..", __FILE__), "fastlane", "Pluginfile")
 eval_gemfile(plugins_path)
+
+gem "faraday-retry", "~> 2.3"
+
+gem "abbrev", "~> 0.1.2"
+
+gem "csv", "~> 3.3"
+gem "ostruct", "~> 0.6.3"
